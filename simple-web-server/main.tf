@@ -101,7 +101,7 @@ resource "aws_security_group" "allow_web" {
 # 7. Create a Network Interface with an IP in the subnet created in step 4
 resource "aws_network_interface" "web-server-nic" {
   subnet_id       = aws_subnet.subnet-1.id
-  private_ips     = ["10.0.1.50"]
+  private_ips     = ["10.0.1.100"]
   security_groups = [aws_security_group.allow_web.id]
 }
 
@@ -109,8 +109,8 @@ resource "aws_network_interface" "web-server-nic" {
 resource "aws_eip" "one" {
   domain                    = "vpc"
   network_interface         = aws_network_interface.web-server-nic.id
-  associate_with_private_ip = "10.0.1.50"
-  depends_on = [aws_internet_gateway.gw]
+  associate_with_private_ip = "10.0.1.100"
+  depends_on = [aws_internet_gateway.gw, aws_instance.web-server-instance]
 }
 
 # 9. Create Ubuntu server and install/enable Apache2
