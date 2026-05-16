@@ -42,6 +42,13 @@ destroy_infrastructure:
   stage: cleanup
   script:
     - terraform destroy -auto-approve
-  dependencies:
-    - build_plan
+      -target=aws_instance.web-server-instance
+      -target=aws_eip.one
+      -target=aws_network_interface.web-server-nic
+      -target=aws_security_group.allow_web
+      -target=aws_route_table_association.example
+      -target=aws_subnet.subnet-1
+      -target=aws_route_table.prod-route-table
+      -target=aws_internet_gateway.gw
+      -target=aws_vpc.prod-vpc
   when: manual # Requires an explicit click in the GitLab UI to run
