@@ -1,0 +1,19 @@
+name: Mirror to GitLab
+
+on: [push, delete]
+
+jobs:
+  to-gitlab:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetches all history so branches match perfectly
+          
+      - name: Mirror to GitLab Mirror
+        uses: SvanBoxel/gitlab-mirror-and-ci-action@master
+        with:
+          args: "https://gitlab.com/tjmjavier/terraform-practice.git"
+        env:
+          GITLAB_PASSWORD: ${{ secrets.GITLAB_PASSWORD }}
