@@ -47,7 +47,7 @@ push to repo
 Root pipeline (.gitlab-ci.yml)
     ├── simple-web-server/** changed?       → trigger simple-web-server/.gitlab-ci.yml
     ├── multi-vpc-architecture/** changed?  → trigger multi-vpc-architecture/.gitlab-ci.yml
-    └── cloudfront-s3-static-web/** changed? → trigger cloudfront-s3-static-web/.gitlab-ci.yml
+    └── cloudfront-static-web-app/** changed? → trigger cloudfront-static-web-app/.gitlab-ci.yml
 ```
 
 Each child pipeline runs independently with its own stages and state. The `strategy: depend` setting means the parent pipeline's status reflects the outcome of whichever child pipelines were triggered — a failing child marks the parent as failed.

@@ -10,7 +10,6 @@ trigger:simple-web-server:
     # Trigger if infrastructure code changes OR if either pipeline configuration changes
     - changes:
         - simple-web-server/**/*
-        - .gitlab-ci.yml
 
 trigger:multi-vpc-architecture:
   stage: triggers
@@ -21,4 +20,13 @@ trigger:multi-vpc-architecture:
     # Trigger if infrastructure code changes OR if either pipeline configuration changes
     - changes:
         - multi-vpc-architecture/**/*
-        - .gitlab-ci.yml
+
+trigger:cloudfront-static-web-app:
+  stage: triggers
+  trigger:
+    include: cloudfront-static-web-app/.gitlab-ci.yml
+    strategy: depend
+  rules:
+    # Trigger if infrastructure code changes OR if either pipeline configuration changes
+    - changes:
+        - cloudfront-static-web-app/**/*
