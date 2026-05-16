@@ -132,44 +132,44 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
 
 # # =======================================================================================
 
-# IMPORTANT: CREATE S3 BUCKET FOR STORING STATE FILE
+# # IMPORTANT: CREATE S3 BUCKET FOR STORING STATE FILE
 
-resource "aws_s3_bucket" "terraform_state" {
-  bucket = "cloudfront-static-web-app-state-bucket" # Must be globally unique
+# resource "aws_s3_bucket" "terraform_state" {
+#   bucket = "cloudfront-static-web-app-state-bucket" # Must be globally unique
 
-  # Prevent accidental deletion of this bucket
-  lifecycle {
-    prevent_destroy = true
-  }
-}
+#   # Prevent accidental deletion of this bucket
+#   lifecycle {
+#     prevent_destroy = true
+#   }
+# }
 
-# Enable versioning so you can see the full revision history of your state files
-resource "aws_s3_bucket_versioning" "enabled" {
-  bucket = aws_s3_bucket.terraform_state.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
+# # Enable versioning so you can see the full revision history of your state files
+# resource "aws_s3_bucket_versioning" "enabled" {
+#   bucket = aws_s3_bucket.terraform_state.id
+#   versioning_configuration {
+#     status = "Enabled"
+#   }
+# }
 
-# Enable server-side encryption by default
-resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
-  bucket = aws_s3_bucket.terraform_state.id
+# # Enable server-side encryption by default
+# resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
+#   bucket = aws_s3_bucket.terraform_state.id
 
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
+#   rule {
+#     apply_server_side_encryption_by_default {
+#       sse_algorithm = "AES256"
+#     }
+#   }
+# }
 
-# Block all public access to the bucket
-resource "aws_s3_bucket_public_access_block" "public_access" {
-  bucket                  = aws_s3_bucket.terraform_state.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
+# # Block all public access to the bucket
+# resource "aws_s3_bucket_public_access_block" "public_access" {
+#   bucket                  = aws_s3_bucket.terraform_state.id
+#   block_public_acls       = true
+#   block_public_policy     = true
+#   ignore_public_acls      = true
+#   restrict_public_buckets = true
+# }
 
 # SEQUENCE OF STEPS
 # 1. terraform init, terraform apply with backend commented out and remote state bucket uncommented
