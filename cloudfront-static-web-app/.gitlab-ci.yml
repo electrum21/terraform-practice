@@ -42,7 +42,7 @@ destroy_infrastructure:
   stage: cleanup
   script:
     - terraform destroy -auto-approve
-      -target=aws_s3_object.myobject
+      -target=aws_s3_object.website_files
       -target=aws_s3_bucket_policy.allow_cloudfront
       -target=aws_cloudfront_distribution.s3_distribution
       -target=aws_cloudfront_origin_access_control.myoac

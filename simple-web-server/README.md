@@ -74,6 +74,9 @@ The `.gitlab-ci.yml` file defines a three-stage pipeline that automates the full
 | `deploy` | `apply_infrastructure` | Automatic | Apply the Terraform plan |
 | `cleanup` | `destroy_infrastructure` | **Manual** | Destroy all resources |
 
+![Pipeline Screenshot](screenshots/pipeline_screenshot.png)
+As seen in the above screenshot, the job is triggered by a job in the parent directory, which detects new commits in the current directory. Upon trigger, the full setup will be initialised, validated, planned and applied.
+
 ### Stage 1 — Plan (`build_plan`)
 
 Runs automatically on every push. This stage:
