@@ -41,7 +41,7 @@ aws_instance.web-server-instance: Creation complete after 17s [id=i-0022f2e0b9e2
 Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
 ```
 
-## 🔧 How to Run
+## 🔧 Manual Deployment Steps
 
 To replicate this environment, follow these steps:
 
