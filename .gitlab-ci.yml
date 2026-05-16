@@ -1,0 +1,24 @@
+stages:
+  - triggers
+
+trigger:simple-web-server:
+  stage: triggers
+  trigger:
+    include: simple-web-server/.gitlab-ci.yml
+    strategy: depend # Ensures parent status reflects child status
+  rules:
+    # Trigger if infrastructure code changes OR if either pipeline configuration changes
+    - changes:
+        - simple-web-server/**/*
+        - .gitlab-ci.yml
+
+trigger:multi-vpc-architecture:
+  stage: triggers
+  trigger:
+    include: multi-vpc-architecture/.gitlab-ci.yml
+    strategy: depend
+  rules:
+    # Trigger if infrastructure code changes OR if either pipeline configuration changes
+    - changes:
+        - multi-vpc-architecture/**/*
+        - .gitlab-ci.yml

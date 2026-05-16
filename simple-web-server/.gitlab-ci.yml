@@ -1,0 +1,45 @@
+image: hashicorp/terraform:latest
+
+# 3 distinct stages
+stages:
+  - test      # Stage 1: Init, Validate, and Plan (Auto)
+  - deploy    # Stage 2: Apply (Auto)
+  - cleanup   # Stage 3: Destroy (Manual)
+
+# Global before_script to ensure we are always running inside the correct subfolder
+before_script:
+  - cd simple-web-server
+
+# STAGE 1: INIT, VALIDATE, PLAN
+build_plan:
+  stage: test
+  script:
+    - terraform init
+    - terraform validate
+    - terraform plan -out=tfplan
+  artifacts:
+    name: "tfplan-$CI_COMMIT_REF_SLUG"
+    paths:
+      - simple-web-server/.terraform/ # Passes the provider plugins so you don't re-download them
+      - simple-web-server/.terraform.lock.hcl
+      - simple-web-server/tfplan # Passes the exact plan execution file
+    expire_in: 1 week
+
+# STAGE 2: APPLY
+apply_infrastructure:
+  stage: deploy
+  script:
+    # No need to run 'terraform init' again because the artifacts restored the .terraform folder
+    - terraform apply -auto-approve tfplan
+  dependencies:
+    - build_plan
+  allow_failure: false # Blocks the pipeline from showing "Passed" until you run or skip it
+
+# STAGE 3: MANUAL DESTROY
+destroy_infrastructure:
+  stage: cleanup
+  script:
+    - terraform destroy -auto-approve
+  dependencies:
+    - build_plan
+  when: manual # Requires an explicit click in the GitLab UI to run
