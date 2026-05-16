@@ -26,6 +26,16 @@ A layered, multi-VPC architecture using reusable Terraform modules. Designed aro
 
 ---
 
+### 3. [`cloudfront-static-web-app/`](./cloudfront-static-web-app)
+
+A secure, globally distributed static web app hosted on a private S3 bucket and served via CloudFront CDN.
+
+Uses Origin Access Control (OAC) with SigV4 signing to ensure the S3 bucket is never exposed directly to the public internet — all traffic routes through CloudFront with forced HTTPS redirection. Terraform state is stored remotely in a separate, versioned, AES-256-encrypted S3 bucket. A dynamic asset uploader handles MIME-type mapping and file hashing for cache invalidation across all static file types.
+
+→ [Read the full README](./cloudfront-static-web-app/README.md)
+
+---
+
 ## 🔁 CI/CD Architecture
 
 The root `.gitlab-ci.yml` acts as a **parent pipeline** that selectively triggers child pipelines in each project directory based on which files changed.
@@ -35,8 +45,9 @@ push to repo
     │
     ▼
 Root pipeline (.gitlab-ci.yml)
-    ├── simple-web-server/** changed?  → trigger simple-web-server/.gitlab-ci.yml
-    └── multi-vpc-architecture/** changed?  → trigger multi-vpc-architecture/.gitlab-ci.yml
+    ├── simple-web-server/** changed?       → trigger simple-web-server/.gitlab-ci.yml
+    ├── multi-vpc-architecture/** changed?  → trigger multi-vpc-architecture/.gitlab-ci.yml
+    └── cloudfront-s3-static-web/** changed? → trigger cloudfront-s3-static-web/.gitlab-ci.yml
 ```
 
 Each child pipeline runs independently with its own stages and state. The `strategy: depend` setting means the parent pipeline's status reflects the outcome of whichever child pipelines were triggered — a failing child marks the parent as failed.

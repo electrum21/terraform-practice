@@ -6,6 +6,10 @@ This project demonstrates the use of **Infrastructure as Code (IaC)** to provisi
 
 Remotely managing your state storage via an S3 backend ensures state file consistency and reliability across your development environment without risking local state corruption.
 
+### Architecture Design
+![Architecture Design](screenshots/architecture.png)
+
+
 ---
 
 ## 🏗️ Architecture & Resources
