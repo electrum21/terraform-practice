@@ -132,7 +132,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
 
 # # =======================================================================================
 
-# # IMPORTANT: CREATE S3 BUCKET FOR STORING STATE FILE
+# # IMPORTANT: CREATE S3 BUCKET FOR STORING STATE FILE; COMMENT OUT ONCE THE REMOTE STATE BUCKET HAS BEEN CREATED
 
 # resource "aws_s3_bucket" "terraform_state" {
 #   bucket = "cloudfront-static-web-app-state-bucket" # Must be globally unique
@@ -174,6 +174,6 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
 # SEQUENCE OF STEPS
 # 1. terraform init, terraform apply with backend commented out and remote state bucket uncommented
 # 2. terraform destroy (remote state bucket will be created but with empty/fresh state now)
-# 3. uncomment the backend in terraform.tf
+# 3. uncomment the backend in terraform.tf, comment out the remote state bucket creation codes
 # 4. trigger the CI/CD pipeline on GitLab by changing a file
 # 5. manually destroy the architecture for cleanup

@@ -30,3 +30,13 @@ trigger:cloudfront-static-web-app:
     # Trigger if infrastructure code changes OR if either pipeline configuration changes
     - changes:
         - cloudfront-static-web-app/**/*
+
+trigger:vpc-peering:
+  stage: triggers
+  trigger:
+    include: vpc-peering/.gitlab-ci.yml
+    strategy: depend
+  rules:
+    # Trigger if infrastructure code changes OR if either pipeline configuration changes
+    - changes:
+        - vpc-peering/**/*

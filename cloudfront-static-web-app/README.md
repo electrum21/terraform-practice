@@ -63,6 +63,64 @@ backend "s3" {
 
 ---
 
+## 🔁 CI/CD Pipeline (GitLab)
+
+The `.gitlab-ci.yml` file defines a three-stage pipeline that automates the full Terraform lifecycle. The pipeline uses the official `hashicorp/terraform:latest` Docker image. With the S3 backend configured, all three stages read and write to the same remote state file, so `destroy` correctly tears down everything `apply` created.
+
+### Pipeline Stages
+
+| Stage | Job | Trigger | Purpose |
+|---|---|---|---|
+| `test` | `build_plan` | Automatic | Init, validate, and plan |
+| `deploy` | `apply_infrastructure` | Automatic | Apply the Terraform plan |
+| `cleanup` | `destroy_infrastructure` | **Manual** | Destroy all resources |
+
+![Pipeline Screenshot](screenshots/pipeline_screenshot.png)
+As seen in the above screenshot, the job is triggered by a job in the parent directory, which detects new commits in the current directory. Upon trigger, the full setup will be initialised, validated, planned and applied.
+
+### Stage 1 — Plan (`build_plan`)
+
+Runs automatically on every push. This stage:
+- Initialises Terraform and connects to the S3 backend (`terraform init`)
+- Validates the configuration syntax (`terraform validate`)
+- Generates and saves an execution plan (`terraform plan -out=tfplan`)
+
+The `.terraform/` directory, lock file, and plan file are saved as **artifacts** (valid for 1 week) so subsequent stages don't need to re-download providers or re-compute the plan.
+
+### Stage 2 — Apply (`apply_infrastructure`)
+
+Runs automatically after a successful plan. This stage:
+- Restores artifacts from Stage 1 (no `terraform init` needed)
+- Applies the saved plan exactly as computed (`terraform apply -auto-approve tfplan`)
+- Uploads all assets in `www/` to the private S3 bucket with correct MIME types and `etag` hashes
+- Terraform writes the updated state to the remote S3 state bucket automatically
+
+### Stage 3 — Destroy (`destroy_infrastructure`)
+
+Requires a **manual trigger** via the GitLab UI. This stage uses `-target` to destroy only the web infrastructure, deliberately leaving the S3 state bucket and its associated resources intact (which would otherwise be blocked by `prevent_destroy = true`):
+
+```yaml
+- terraform destroy -auto-approve
+    -target=aws_s3_object.website_files
+    -target=aws_s3_bucket_policy.allow_cloudfront
+    -target=aws_cloudfront_distribution.s3_distribution
+    -target=aws_cloudfront_origin_access_control.myoac
+    -target=aws_s3_bucket_public_access_block.myblock
+    -target=aws_s3_bucket.mybucket
+```
+
+Terraform resolves dependencies automatically from the targets provided, so resources are torn down in the correct order (e.g. bucket policy before bucket, OAC before distribution).
+
+### Key Design Decisions
+
+* **Remote state via S3:** Every pipeline job connects to the same S3 backend, so `plan`, `apply`, and `destroy` all operate on the same state. This is what makes the destroy stage actually work.
+* **Artifact passing:** The `.terraform/` provider cache and compiled `tfplan` are passed between stages, avoiding redundant downloads and ensuring the exact same plan is applied that was reviewed.
+* **Manual destroy gate:** The `when: manual` directive ensures infrastructure — including the CloudFront distribution and private S3 bucket — is never accidentally torn down by an automated trigger.
+* **State bucket excluded from destroy:** The S3 state bucket and its versioning, encryption, and access block resources are intentionally omitted from the destroy targets. The `prevent_destroy = true` lifecycle rule provides an additional safeguard.
+* **`before_script`:** A global `cd cloudfront-s3-static-web` ensures all Terraform commands run in the correct subdirectory regardless of the stage.
+
+---
+
 ## 🔧 Manual Deployment Steps
 
 > First time deployment only: You must follow the bootstrapping instructions below to prevent a dependency deadlock on the remote state bucket.
@@ -73,7 +131,7 @@ Clone the project (the HTML, CSS, JavaScript, and image assets are already insid
 
 ```bash
 git clone https://github.com/electrum21/terraform-practice.git
-cd cloudfront-s3-static-web
+cd cloudfront-static-web-app
 ```
 
 ### 2. Bootstrap the State Bucket (First Run Only)

@@ -1,0 +1,63 @@
+image: 
+  name: hashicorp/terraform:latest
+  entrypoint: [""]
+
+# 3 distinct stages
+stages:
+  - test      # Stage 1: Init, Validate, and Plan (Auto)
+  - deploy    # Stage 2: Apply (Auto)
+  - cleanup   # Stage 3: Destroy (Manual)
+
+# Global before_script to ensure we are always running inside the correct subfolder
+before_script:
+  - cd vpc-peering
+
+# STAGE 1: INIT, VALIDATE, PLAN
+build_plan:
+  stage: test
+  script:
+    - terraform init
+    - terraform validate
+    - terraform plan -out=tfplan
+  artifacts:
+    name: "tfplan-$CI_COMMIT_REF_SLUG"
+    paths:
+      - vpc-peering/.terraform/ # Passes the provider plugins so you don't re-download them
+      - vpc-peering/.terraform.lock.hcl
+      - vpc-peering/tfplan # Passes the exact plan execution file
+    expire_in: 1 week
+
+# STAGE 2: APPLY
+apply_infrastructure:
+  stage: deploy
+  script:
+    # No need to run 'terraform init' again because the artifacts restored the .terraform folder
+    - terraform apply -auto-approve tfplan
+  dependencies:
+    - build_plan
+  allow_failure: false # Blocks the pipeline from showing "Passed" until you run or skip it
+
+# STAGE 3: MANUAL DESTROY
+destroy_infrastructure:
+  stage: cleanup
+  script:
+    terraform destroy -auto-approve 
+      -target="aws_instance.primary_instance" 
+      -target="aws_instance.secondary_instance" 
+      -target="aws_security_group.primary_sg" 
+      -target="aws_security_group.secondary_sg" 
+      -target="aws_route.primary_to_secondary" 
+      -target="aws_route.secondary_to_primary" 
+      -target="aws_vpc_peering_connection_accepter.secondary_accepter" 
+      -target="aws_vpc_peering_connection.primary_to_secondary" 
+      -target="aws_route_table_association.primary_rta" 
+      -target="aws_route_table_association.secondary_rta" 
+      -target="aws_route_table.primary_rt" 
+      -target="aws_route_table.secondary_rt" 
+      -target="aws_internet_gateway.primary_igw" 
+      -target="aws_internet_gateway.secondary_igw" 
+      -target="aws_subnet.primary_subnet" 
+      -target="aws_subnet.secondary_subnet" 
+      -target="aws_vpc.primary_vpc" 
+      -target="aws_vpc.secondary_vpc"
+  when: manual # Requires an explicit click in the GitLab UI to run
