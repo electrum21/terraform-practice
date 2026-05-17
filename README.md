@@ -48,9 +48,9 @@ Automates the deployment of two isolated Virtual Private Clouds across different
 
 ### 5. [`beanstalk-blue-green-deployment/`](./beanstalk-blue-green-deployment)
 
-A secure, multi-region network architecture provisioning an automated and private cross-region VPC Peering connection using Terraform.
+A zero-downtime blue-green deployment pipeline provisioned on AWS Elastic Beanstalk using Terraform.
 
-Automates the deployment of two isolated Virtual Private Clouds across different AWS regions (us-east-1 and us-west-2), each hosting an Ubuntu EC2 instance. Using a bidirectional requester-accepter model, traffic between the instances routes entirely within the AWS backbone network using private IP addresses, bypassing the public internet for secure, low-latency communication. Included Internet Gateways are strictly confined to handling administrative SSH access, while custom route tables and security groups restrict inter-VPC traffic explicitly to the peered CIDR blocks.
+Stands up two structurally identical environments — Blue (production) and Green (staging) — each running a different version of a Node.js application on the same instance type, platform, and load balancer configuration. A single AWS CLI CNAME swap promotes Green to production instantly and without redeployment, with Blue retained as a live rollback target. Application bundles are stored in a private, access-blocked S3 bucket and retrieved by Beanstalk via IAM instance role. Terraform state is stored remotely in a versioned, AES-256-encrypted S3 bucket. A three-stage GitLab pipeline handles plan, apply, and manual destroy automatically.
 
 → [Read the full README](./beanstalk-blue-green-deployment/README.md)
 
