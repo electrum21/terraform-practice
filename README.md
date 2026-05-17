@@ -46,6 +46,16 @@ Automates the deployment of two isolated Virtual Private Clouds across different
 
 ---
 
+### 5. [`beanstalk-blue-green-deployment/`](./beanstalk-blue-green-deployment)
+
+A secure, multi-region network architecture provisioning an automated and private cross-region VPC Peering connection using Terraform.
+
+Automates the deployment of two isolated Virtual Private Clouds across different AWS regions (us-east-1 and us-west-2), each hosting an Ubuntu EC2 instance. Using a bidirectional requester-accepter model, traffic between the instances routes entirely within the AWS backbone network using private IP addresses, bypassing the public internet for secure, low-latency communication. Included Internet Gateways are strictly confined to handling administrative SSH access, while custom route tables and security groups restrict inter-VPC traffic explicitly to the peered CIDR blocks.
+
+→ [Read the full README](./beanstalk-blue-green-deployment/README.md)
+
+---
+
 ## 🔁 CI/CD Architecture
 
 The root `.gitlab-ci.yml` acts as a **parent pipeline** that selectively triggers child pipelines in each project directory based on which files changed.
@@ -58,7 +68,8 @@ Root pipeline (.gitlab-ci.yml)
     ├── simple-web-server/** changed?       → trigger simple-web-server/.gitlab-ci.yml
     ├── multi-vpc-architecture/** changed?  → trigger multi-vpc-architecture/.gitlab-ci.yml
     ├── cloudfront-static-web-app/** changed? → trigger cloudfront-static-web-app/.gitlab-ci.yml
-    └── vpc-peering/** changed? → trigger vpc-peering/.gitlab-ci.yml
+    ├── vpc-peering/** changed? → trigger vpc-peering/.gitlab-ci.yml
+    └── beanstalk-blue-green-deployment/** changed? → trigger beanstalk-blue-green-deployment/.gitlab-ci.yml
 ```
 
 Each child pipeline runs independently with its own stages and state. The `strategy: depend` setting means the parent pipeline's status reflects the outcome of whichever child pipelines were triggered — a failing child marks the parent as failed.

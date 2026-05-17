@@ -96,6 +96,66 @@ The peering traffic **never touches the IGW**. This separation is enforced at bo
 
 ---
 
+
+## 🔁 CI/CD Pipeline (GitLab)
+
+The `.gitlab-ci.yml` file defines a three-stage pipeline that automates the full Terraform lifecycle across both AWS regions, from planning through to optional teardown. The pipeline uses the official `hashicorp/terraform:latest` Docker image and requires four CI/CD variables — `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `PRIMARY_KEY_NAME`, and `SECONDARY_KEY_NAME` — to be set in the GitLab project settings. With the S3 backend configured, all three stages read and write to the same remote state file, so `destroy` correctly tears down everything `apply` created.
+
+### Pipeline Stages
+
+| Stage | Job | Trigger | Purpose |
+|---|---|---|---|
+| `test` | `build_plan` | Automatic | Init, validate, and plan across both regions |
+| `deploy` | `apply_infrastructure` | Automatic | Apply the saved plan to provision all resources |
+| `cleanup` | `destroy_infrastructure` | **Manual** | Targeted destroy of all VPC/EC2 resources, leaving the state bucket intact |
+
+### Stage 1 — Plan (`build_plan`)
+
+Runs automatically on every push. This stage:
+- Initialises Terraform with the configured S3 backend (`terraform init`)
+- Validates configuration syntax across both provider aliases (`terraform validate`)
+- Generates and saves an execution plan (`terraform plan -out=tfplan`)
+
+The `.terraform/` directory, provider lock file, and plan artifact are saved as **pipeline artifacts** (valid for 1 week) so subsequent stages can restore the exact provider binaries and plan without re-downloading or re-computing.
+
+### Stage 2 — Apply (`apply_infrastructure`)
+
+Runs automatically after a successful plan. This stage:
+- Restores artifacts from Stage 1 (no `terraform init` needed)
+- Applies the saved plan exactly as computed (`terraform apply -auto-approve tfplan`)
+- Provisions both VPCs, subnets, internet gateways, route tables, the peering connection and accepter, peering routes, security groups, and EC2 instances across `us-east-1` and `us-west-2`
+- Terraform writes the updated state to the remote S3 backend automatically
+
+### Stage 3 — Destroy (`destroy_infrastructure`)
+
+Requires a **manual trigger** via the GitLab UI. This stage uses `-target` flags to destroy only the VPC and EC2 infrastructure, deliberately leaving the S3 state bucket and its associated resources intact:
+
+```bash
+terraform destroy -auto-approve \
+  -target="aws_instance.primary_instance" \
+  -target="aws_instance.secondary_instance" \
+  -target="aws_security_group.primary_sg" \
+  -target="aws_security_group.secondary_sg" \
+  -target="aws_route.primary_to_secondary" \
+  -target="aws_route.secondary_to_primary" \
+  -target="aws_vpc_peering_connection_accepter.secondary_accepter" \
+  -target="aws_vpc_peering_connection.primary_to_secondary" \
+  -target="aws_route_table_association.primary_rta" \
+  -target="aws_route_table_association.secondary_rta" \
+  -target="aws_route_table.primary_rt" \
+  -target="aws_route_table.secondary_rt" \
+  -target="aws_internet_gateway.primary_igw" \
+  -target="aws_internet_gateway.secondary_igw" \
+  -target="aws_subnet.primary_subnet" \
+  -target="aws_subnet.secondary_subnet" \
+  -target="aws_vpc.primary_vpc" \
+  -target="aws_vpc.secondary_vpc"
+```
+
+Terraform resolves the dependency graph automatically from the provided targets, tearing down resources in the correct order — instances before security groups, peering connection before VPCs. The state bucket is intentionally omitted to preserve your deployment history.
+
+---
+
 ## 🔧 Manual Deployment Steps
 
 ### Prerequisites
