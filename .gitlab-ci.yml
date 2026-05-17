@@ -40,3 +40,13 @@ trigger:vpc-peering:
     # Trigger if infrastructure code changes OR if either pipeline configuration changes
     - changes:
         - vpc-peering/**/*
+
+trigger:beanstalk-blue-green-deployment:
+  stage: triggers
+  trigger:
+    include: beanstalk-blue-green-deployment/.gitlab-ci.yml
+    strategy: depend
+  rules:
+    # Trigger if infrastructure code changes OR if either pipeline configuration changes
+    - changes:
+        - beanstalk-blue-green-deployment/**/*

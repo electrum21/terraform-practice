@@ -1,0 +1,60 @@
+image:
+  name: hashicorp/terraform:latest
+  entrypoint: [""]
+
+stages:
+  - test      # Stage 1: Init, Validate, and Plan (Auto)
+  - deploy    # Stage 2: Apply (Auto)
+  - cleanup   # Stage 3: Destroy (Manual)
+
+before_script:
+  - cd beanstalk-blue-green-deployment
+
+# STAGE 1: INIT, VALIDATE, PLAN
+build_plan:
+  stage: test
+  script:
+    - terraform init
+    - terraform validate
+    - terraform plan -out=tfplan
+  artifacts:
+    name: "tfplan-$CI_COMMIT_REF_SLUG"
+    paths:
+      - beanstalk-blue-green-deployment/.terraform/
+      - beanstalk-blue-green-deployment/.terraform.lock.hcl
+      - beanstalk-blue-green-deployment/tfplan
+    expire_in: 1 week
+
+# STAGE 2: APPLY
+apply_infrastructure:
+  stage: deploy
+  script:
+    - terraform apply -auto-approve tfplan
+  dependencies:
+    - build_plan
+  allow_failure: false
+
+# STAGE 3: MANUAL DESTROY
+destroy_infrastructure:
+  stage: cleanup
+  script:
+    - >
+      terraform destroy -auto-approve
+      -target="aws_elastic_beanstalk_environment.blue"
+      -target="aws_elastic_beanstalk_environment.green"
+      -target="aws_elastic_beanstalk_application_version.v1"
+      -target="aws_elastic_beanstalk_application_version.v2"
+      -target="aws_s3_object.app_v1"
+      -target="aws_s3_object.app_v2"
+      -target="aws_s3_bucket_public_access_block.app_versions"
+      -target="aws_s3_bucket.app_versions"
+      -target="aws_elastic_beanstalk_application.app"
+      -target="aws_iam_instance_profile.eb_ec2_profile"
+      -target="aws_iam_role_policy_attachment.eb_web_tier"
+      -target="aws_iam_role_policy_attachment.eb_worker_tier"
+      -target="aws_iam_role_policy_attachment.eb_multicontainer_docker"
+      -target="aws_iam_role.eb_ec2_role"
+      -target="aws_iam_role_policy_attachment.eb_service_health"
+      -target="aws_iam_role_policy_attachment.eb_service_managed_updates"
+      -target="aws_iam_role.eb_service_role"
+  when: manual

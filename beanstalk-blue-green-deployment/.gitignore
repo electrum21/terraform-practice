@@ -1,0 +1,15 @@
+# Local hardware/provider data
+.terraform/
+
+# State files (Can contain secrets like passwords/keys in plain text)
+*.tfstate
+*.tfstate.backup
+
+# Lock files (Usually ignored unless you are in a team environment)
+.terraform.lock.hcl
+
+# Crash logs
+crash.log
+
+# Variables containing sensitive secrets
+*.tfvars
