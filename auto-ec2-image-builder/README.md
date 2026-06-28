@@ -309,6 +309,4 @@ The two SSM parameters created by this project — `/latest_ami_id` and the key 
 
 **IMDSv2** — `launch_instance.py` sets `HttpTokens: required` on every launched instance.
 
-**Component YAML encoding** — keep component files plain ASCII. Em dashes, smart quotes, or any non-ASCII character in a PowerShell block will cause a parse error in the Image Builder environment. This is a common gotcha when copying snippets from the web.
-
 **Key pair PEM** — stored in SSM at `/tfpractice/keypairs/tfpractice-opsvm-keypair` as a `SecureString`. Use the `aws ssm get-parameter` command in the "Connecting to the instance" section to retrieve it.
